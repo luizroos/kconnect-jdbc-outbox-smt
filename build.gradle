@@ -1,0 +1,36 @@
+plugins {
+	id 'java'
+    id 'eclipse'
+}
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+	maven {
+		url "http://packages.confluent.io/maven/"
+	}
+}
+
+group = 'kconnect-outbox-smt'
+version = '0.0.1'
+sourceCompatibility = 1.8
+
+dependencies {
+	compileOnly group: 'org.apache.kafka', name: 'connect-api', version: '2.7.0'
+	compileOnly group: 'org.apache.kafka', name: 'connect-transforms', version: '2.7.0'
+	implementation group: 'io.confluent', name: 'kafka-connect-avro-converter', version: '5.2.1'
+}
+
+test {
+	useJUnitPlatform()
+}
+
+jar {
+	manifest {
+		attributes "Main-Class": "kconnect-outbox-smt"
+	}
+
+	from {
+		configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+	}
+}

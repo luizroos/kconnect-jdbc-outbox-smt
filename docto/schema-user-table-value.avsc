@@ -1,0 +1,33 @@
+{
+  "fields": [
+    {
+      "name": "id",
+      "type": "bytes"
+    },
+    {
+      "name": "created_at",
+      "type": {
+        "logicalType": "timestamp-millis",
+        "type": "long"
+      }
+    },
+    {
+      "name": "email",
+      "type": "string"
+    },
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "updated_at",
+      "type": {
+        "logicalType": "timestamp-millis",
+        "type": "long"
+      }
+    }
+  ],
+  "name": "ConnectDefault",
+  "namespace": "io.confluent.connect.avro",
+  "type": "record"
+}
