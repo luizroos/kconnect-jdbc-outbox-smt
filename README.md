@@ -19,7 +19,7 @@ Porém a tabela de outbox é como outra tabela qualquer, tem suas colunas, não 
 
 Assumindo que a mensagem pode ser gravada na tabela de outbox em T1 usando o schema 1, então em T2 ocorre um deploy que atualiza o schema para a versão 2 e então em T3 roda o kafka connect e lê esses dados, o kafka connect teria que: 1) Enviar exatamente os dados do evento persistindos na coluna da tabela de outbox para o tópico especifico, no formato especificado pelo schema e 2) não pode dar erro de falta de compatibilidade da mensagem gravada na tabela com o que está registrado no schema.
 
-Usando debezium, existe um [transform](https://debezium.io/documentation/reference/configuration/outbox-event-router.html) que pode ser usado e que faz isso, mas não queremos usar debezium, queremos usar JdbcSourceConnector. Então muito baseado na implementação do debezium, criamos um transform que suporta leituras de tabelas de outbox, de eventos serializados usando [KafkaAvroSerializer](https://github.com/confluentinc/schema-registry/blob/master/avro-serializer/src/main/java/io/confluent/kafka/serializers/KafkaAvroSerializer.java), suportando mudança de versão dos schemas.
+Usando debezium, existe um [transform](https://debezium.io/documentation/reference/configuration/outbox-event-router.html) que pode ser usado e que faz isso, mas não queremos usar debezium, queremos usar JdbcSourceConnector. Então criamos um transform que suporta leituras de tabelas de outbox, de eventos serializados usando [KafkaAvroSerializer](https://github.com/confluentinc/schema-registry/blob/master/avro-serializer/src/main/java/io/confluent/kafka/serializers/KafkaAvroSerializer.java), suportando mudança de versão dos schemas.
 
 ## Como usar 
 
@@ -61,8 +61,8 @@ De qualquer forma, os parâmetros básicos para se usar são esses:
     "transforms.outbox.type": "transform.outbox.AvroJdbcOutbox",   // (4) declamaramos o transform.
     "transforms.outbox.schema.registry.url": "http://schema-registry:8081",  // (5) informamos qual a url do schema registry.
     "transforms.outbox.table.column.payload": "message_payload",  // (6) informamos qual a coluna que tem gravado o payload da mensagem.
-    "transforms.outbox.table.column.key": "message_key",  // (6) informamos qual a coluna que grava a chave que será usada para enviar a mensagem.
-    "transforms.outbox.table.column.topic": "message_topic"  // (7) informamos qual a coluna que grava o tópico que aquela mensagem pertence
+    "transforms.outbox.table.column.key": "message_key",  // (7) informamos qual a coluna que grava a chave que será usada para enviar a mensagem.
+    "transforms.outbox.table.column.topic": "message_topic"  // (8) informamos qual a coluna que grava o tópico que aquela mensagem pertence
   }
 }
 ```
