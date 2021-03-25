@@ -76,7 +76,8 @@ Descrição de todos os parâmetros:
 |---------------------------- |:-------------:| -----:|
 | schema.registry.url         | sim           | Endpoint do schema registry. |
 | schema.cache.ttl            | não           | Tempo em minutos que o schema do tópico vai ficar cacheado, default é 60 minutos. Na prática é o tempo máximo para que uma mudança de schema na gravação do schema demora para replicar para o tópico |
-| table.column.payload        | sim           | Nome da coluna que tem os dados da mensagem |`| table.column.payload.encode | não           | Como o payload está encodado na tabela, opções possíveis são base64 (valor default) e byte_array) |
+| table.column.payload        | sim           | Nome da coluna que tem os dados da mensagem |
+| table.column.payload.encode | não           | Como o payload está encodado na tabela, opções possíveis são base64 (valor default) e byte_array) |
 | table.column.key            | sim           | Nome da coluna que tem a chave da mensagem. Não é a PK da tabela, é a chave que será usada como partition key no envio da mensagem |
 | table.column.topic          | não           | Nome da coluna que tem o nome do tópico que deve ser enviado a mensagem. Apesar de opcional, se não for informado, deve ser informado o parâmetro routing.topic |
 | routing.topic               | não           | Nome do tópico que deve ser encaminhado a mensagem, sobrescreve table.column.topic. Use se você tem várias tabelas de outbox ou vai filtrar os eventos de cada tópico via query |
