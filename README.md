@@ -26,7 +26,7 @@ Usando debezium, existe um [transform](https://debezium.io/documentation/referen
 
 ## Como usar 
 
-Essa lib foi usada para usar como exemplo em aula de implementação de outbox, pode conferir [aqui](https://github.com/luizroos/hands-on-microservices/tree/e15/vm), nele ensino a subir o kafka, criar uma imagem do kafka connect com esse transform e executar lendo de uma aplicação de teste.
+Essa lib foi usada para usar como exemplo em aula de implementação de outbox, pode conferir [aqui](https://github.com/luizroos/hands-on-microservices/tree/e15), nele ensino a subir o kafka, criar uma imagem do kafka connect com esse transform e executar lendo de uma aplicação de teste.
 
 De qualquer forma, os parâmetros básicos para se usar são esses:
 
