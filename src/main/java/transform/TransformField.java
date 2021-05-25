@@ -1,6 +1,8 @@
 package transform;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.kafka.common.config.ConfigDef;
@@ -75,4 +77,15 @@ public class TransformField {
 		return fieldValue.toString().trim();
 	}
 
+	public List<String> getList(final Map<String, ?> transformConfigMap) {
+		Object fieldValue = transformConfigMap.get(name);
+		if (fieldValue == null) {
+			fieldValue = defaultValue;
+		}
+		if (fieldValue == null) {
+			return null;
+		}
+
+		return Arrays.asList(fieldValue.toString().split(","));
+	}
 }
