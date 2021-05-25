@@ -1,6 +1,7 @@
 package transform.outbox;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Base64;
@@ -53,7 +54,9 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 
 	private String routingTopic;
 
-	private List<String> columnsHeaders;
+	private List<String> headerFields;
+
+	private String partitionField;
 
 	private SchemaRegistryClient schemaRegistryClient;
 
@@ -87,8 +90,11 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 		this.schemaCacheTtl = jdbcOutboxFields.getSchemaCacheTtlField();
 		LOGGER.info("configure, schemaCacheTtl={} ", schemaCacheTtl);
 
-		this.columnsHeaders = jdbcOutboxFields.getColumnsHeaders();
-		LOGGER.info("configure, columnsHeaders={} ", columnsHeaders);
+		this.headerFields = jdbcOutboxFields.getColumnsHeaders();
+		LOGGER.info("configure, headerFields={} ", headerFields);
+
+		this.partitionField = jdbcOutboxFields.getPartition();
+		LOGGER.info("configure, partitionField={} ", this.partitionField);
 
 		final String schemaRegistryUrl = jdbcOutboxFields.getSchemaRegistryUrlField();
 		LOGGER.info("configure, schemaRegistry={} ", schemaRegistryUrl);
@@ -160,6 +166,7 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 		final String messageKey = eventStruct.getString(messageKeyField);
 		final Object messagePayload = eventStruct.get(messagePayloadField);
 		final String messageTopic = getMessageTopic(eventStruct);
+		final Integer partitionNumber = getPartitionNumber(eventStruct);
 
 		LOGGER.debug("apply, messageTopic={}, messageKey={}, messagePayload={}", messageTopic, messageKey,
 			messagePayload
@@ -186,7 +193,7 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 		LOGGER.debug("apply, schemaAndValue={}", genericContainer);
 
 		final R newRecord = recordToApply.newRecord(messageTopic, //
-			null, //
+			partitionNumber, //
 			Schema.STRING_SCHEMA, //
 			messageKey, //
 			schemaAndValue.schema(), //
@@ -203,13 +210,23 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 		return newRecord;
 	}
 
+	private Integer getPartitionNumber(final Struct eventStruct) {
+		final Object partitionValue = eventStruct.get(this.partitionField);
+
+		if (partitionValue == null) {
+			return null;
+		}
+
+		return ((BigDecimal) partitionValue).intValue();
+	}
+
 	private void applyHeaders(final R newRecord, final Struct eventStruct) {
 
-		if (this.columnsHeaders == null || this.columnsHeaders.isEmpty()) {
+		if (this.headerFields == null || this.headerFields.isEmpty()) {
 			return;
 		}
 
-		for (final String headerKey : this.columnsHeaders) {
+		for (final String headerKey : this.headerFields) {
 			final Field field = eventStruct.schema()
 				.field(headerKey);
 			final Object headerValue = eventStruct.get(headerKey);

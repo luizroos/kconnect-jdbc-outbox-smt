@@ -90,6 +90,16 @@ public class AvroJdbcOutboxFields {
 			ConfigDef.Width.MEDIUM, //
 			null);
 
+	static TransformField FIELD_PARTITION_COLUMN = new TransformField(8, //
+		"outbox.table", //
+		"table.column.partition", //
+		"columns partition mapping", //
+		"The column which contains the partition number for topic within the outbox table", //
+		ConfigDef.Type.STRING, //
+		ConfigDef.Importance.LOW, //
+		ConfigDef.Width.SHORT, //
+		null);
+
 	static final List<TransformField> ALL_FIELDS = Arrays.asList(AvroJdbcOutboxFields.FIELD_KEY_COLUMN, //
 			AvroJdbcOutboxFields.FIELD_PAYLOAD_COLUMN, //
 			AvroJdbcOutboxFields.FIELD_SCHEMA_REGISTRY, //
@@ -134,4 +144,7 @@ public class AvroJdbcOutboxFields {
 		return FIELD_HEADERS_COLUMNS.getList(transformConfigMap);
 	}
 
+	public String getPartition() {
+		return FIELD_PARTITION_COLUMN.getString(transformConfigMap);
+	}
 }

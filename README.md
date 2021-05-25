@@ -82,8 +82,7 @@ Descrição de todos os parâmetros:
 | table.column.topic          | não           | Nome da coluna que tem o nome do tópico que deve ser enviado a mensagem. Apesar de opcional, se não for informado, deve ser informado o parâmetro routing.topic |
 | routing.topic               | não           | Nome do tópico que deve ser encaminhado a mensagem, sobrescreve table.column.topic. Use se você tem várias tabelas de outbox ou vai filtrar os eventos de cada tópico via query |
 | table.column.headers        | não           | Nome das colunas, separadas por vírgula, para serem adicionadas ao header da mensagem  |
-
-
+| table.column.partition      | não           | Nome da coluna que mapeia o número da partição que as mensagens devem ser publicadas  |
 
 ### Exemplos
 
@@ -103,3 +102,18 @@ Se COLUMNS_1 for um Long, COLUMNS_2 for uma String, e COLUMNS_3 um Timestamp, ca
 header com os tipos de dados lidos do banco.
 Quando o parâmetro não é informado, nenhum valor é adicionado ao Header.
 
+
+#### table.column.partition
+
+Este parâmetro permite informa o nome da coluna que contém o número de partição que o evento deve ser publicado no 
+tópico do kafka. Exemplo
+
+```json
+{
+  "transforms": "outbox",
+  "transforms.outbox.table.column.partition": "COLUMNS_PARTITION_NUMBER"  
+}
+```
+
+A coluna do banco de dados deve ser do tipo numérica e convertida para um Integer (Int32).
+Quando o parâmetro não é informado, nenhum número de partição é informado para o kafka.
