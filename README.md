@@ -81,6 +81,25 @@ Descrição de todos os parâmetros:
 | table.column.key            | sim           | Nome da coluna que tem a chave da mensagem. Não é a PK da tabela, é a chave que será usada como partition key no envio da mensagem |
 | table.column.topic          | não           | Nome da coluna que tem o nome do tópico que deve ser enviado a mensagem. Apesar de opcional, se não for informado, deve ser informado o parâmetro routing.topic |
 | routing.topic               | não           | Nome do tópico que deve ser encaminhado a mensagem, sobrescreve table.column.topic. Use se você tem várias tabelas de outbox ou vai filtrar os eventos de cada tópico via query |
+| table.column.headers        | não           | Nome das colunas, separadas por vírgula, para serem adicionadas ao header da mensagem  |
 
 
+
+### Exemplos
+
+#### table.column.headers
+
+Este parâmetro permite informa um ou mais nomes de colunas que serão inseridas com os respectivos novos no 
+header de cada evento processado. Os nomes devem ser separados por vírgula conforme o exemplo a seguir.
+
+```json
+{
+  "transforms": "outbox",
+  "transforms.outbox.table.column.headers": "COLUMNS_1,COLUMNS_2,COLUMNS_3"  
+}
+```
+
+Se COLUMNS_1 for um Long, COLUMNS_2 for uma String, e COLUMNS_3 um Timestamp, cada um dos valores serão adicionados ao 
+header com os tipos de dados lidos do banco.
+Quando o parâmetro não é informado, nenhum valor é adicionado ao Header.
 
