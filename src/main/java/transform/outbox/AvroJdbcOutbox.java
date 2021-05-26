@@ -4,12 +4,17 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 import org.apache.avro.generic.GenericContainer;
 import org.apache.avro.specific.SpecificData;
@@ -46,6 +51,8 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 
 	private String messagePayloadEncode;
 
+	private String messageKeyEncodeField;
+
 	private String messageKeyField;
 
 	private String messageTopicField;
@@ -66,6 +73,11 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 
 	private Deserializer deserializer;
 
+	public static final Set<String> PAYLOAD_VALID_ENCODING = Collections.unmodifiableSet(
+		new HashSet<>(Arrays.asList("byte_array", "base64")));
+	public static final Set<String> KEY_VALID_ENCODING = Collections.unmodifiableSet(
+		new HashSet<>(Arrays.asList("byte_array", "base64", "string")));
+
 	@Override
 	public void configure(Map<String, ?> configMap) {
 		configMap.forEach((k, v) -> LOGGER.info(("key {" + k + "} , value {" + v + "}")));
@@ -80,6 +92,9 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 
 		this.messagePayloadEncode = jdbcOutboxFields.getMessagePayloadEncodeField();
 		LOGGER.info("configure, messagePayloadEncode={} ", messagePayloadEncode);
+
+		this.messageKeyEncodeField = jdbcOutboxFields.getMessageKeyEncodeField();
+		LOGGER.info("configure, messageKeyEncodeField={} ", messagePayloadEncode);
 
 		this.messageTopicField = jdbcOutboxFields.getMessageTopicField();
 		LOGGER.info("configure, messageTopicField={} ", messageTopicField);
@@ -108,18 +123,28 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 		this.deserializer = new Deserializer(schemaRegistryClient);
 
 		// validações
+		validateMessageTopicAndRouting();
+		validateEncodeSelectedFor(this.messagePayloadEncode, AvroJdbcOutboxFields.FIELD_PAYLOAD_ENCODE.getName(),
+			PAYLOAD_VALID_ENCODING
+		);
+		validateEncodeSelectedFor(this.messageKeyEncodeField, AvroJdbcOutboxFields.FIELD_KEY_ENCODE.getName(),
+			KEY_VALID_ENCODING
+		);
+	}
+
+	static void validateEncodeSelectedFor(String encodeSelected, String fieldName, Set<String> validEncoding) {
+		if (encodeSelected == null || !validEncoding.contains(encodeSelected)) {
+			throw new IllegalStateException(String.format("invalid value to %s", fieldName));
+		}
+	}
+
+	private void validateMessageTopicAndRouting() {
 		if (messageTopicField == null && routingTopic == null) {
 			throw new IllegalStateException(
 				String.format("Either %s or %s must be filled", AvroJdbcOutboxFields.FIELD_ROUTING_TOPIC.getName(),
 					AvroJdbcOutboxFields.FIELD_TOPIC_COLUMN.getName()
 				));
 		}
-
-		if (messagePayloadEncode.equals("byte_array") && messagePayloadEncode.equals("base64")) {
-			throw new IllegalStateException(
-				String.format("invalid value to %s", AvroJdbcOutboxFields.FIELD_PAYLOAD_ENCODE.getName()));
-		}
-
 	}
 
 	private final org.apache.avro.Schema getTopicAvroSchema(String topic) {
@@ -163,7 +188,7 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 		final Struct eventStruct = requireStruct(recordToApply.value(), "Read Outbox Event");
 		LOGGER.debug("apply, eventStruct={}", eventStruct);
 
-		final String messageKey = eventStruct.getString(messageKeyField);
+		final String messageKey = getMessageKey(eventStruct, this.messageKeyEncodeField, this.messageKeyField);
 		final Object messagePayload = eventStruct.get(messagePayloadField);
 		final String messageTopic = getMessageTopic(eventStruct);
 		final Integer partitionNumber = getPartitionNumber(eventStruct);
@@ -173,13 +198,7 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 		);
 
 		// deserializa o que foi serializado com KafkaAvroSerializer
-		final byte[] messagePayloadBytes;
-		if (messagePayloadEncode.equals("base64")) {
-			messagePayloadBytes = Base64.getDecoder()
-				.decode(messagePayload.toString());
-		} else {
-			messagePayloadBytes = (byte[]) messagePayload;
-		}
+		final byte[] messagePayloadBytes = getBytesDecoded(messagePayload, this.messagePayloadEncode);
 		final GenericContainerWithVersion genericContainer = deserializer.deserialize(messageTopic, false,
 			messagePayloadBytes
 		);
@@ -208,6 +227,37 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 		LOGGER.debug("apply, recordToApply={}", newRecord);
 
 		return newRecord;
+	}
+
+	static byte[] getBytesDecoded(final Object stringEncoded, final String selectedEncoding) {
+		if (selectedEncoding.equals("base64")) {
+			return Base64.getDecoder()
+				.decode(stringEncoded.toString());
+		} else {
+			return (byte[]) stringEncoded;
+		}
+	}
+
+	static String getMessageKey(final Struct eventStruct, final String keyEncodingSelected,
+		final String keyFieldName) {
+		Object keyEncoded = eventStruct.get(keyFieldName);
+
+		// Só precisa decodifica se a key não é string (default).
+		if (!keyEncodingSelected.equals("string")) {
+			final byte[] keyInBytes = getBytesDecoded(keyEncoded, keyEncodingSelected);
+			if (keyEncoded != null) {
+				keyEncoded = new String(keyInBytes);
+			}
+		}
+
+		// Quando a key é nula, temos problemas no kafka connector,
+		// então, melhor aplicarmos um valor qualquer randômico.
+		if (keyEncoded == null) {
+			keyEncoded = UUID.randomUUID()
+				.toString();
+		}
+
+		return keyEncoded.toString();
 	}
 
 	private Integer getPartitionNumber(final Struct eventStruct) {

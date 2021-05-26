@@ -100,6 +100,16 @@ public class AvroJdbcOutboxFields {
 		ConfigDef.Width.SHORT, //
 		null);
 
+	static TransformField FIELD_KEY_ENCODE = new TransformField(9, //
+		"outbox.table", //
+		"table.column.key.encode", //
+		"message key encode", //
+		"The way how the key is encoded (valid values are base64, byte_array or string). Default value is string", //
+		ConfigDef.Type.STRING, //
+		ConfigDef.Importance.HIGH, //
+		ConfigDef.Width.MEDIUM, //
+		"string");
+
 	static final List<TransformField> ALL_FIELDS = Arrays.asList(AvroJdbcOutboxFields.FIELD_KEY_COLUMN, //
 			AvroJdbcOutboxFields.FIELD_PAYLOAD_COLUMN, //
 			AvroJdbcOutboxFields.FIELD_SCHEMA_REGISTRY, //
@@ -122,6 +132,10 @@ public class AvroJdbcOutboxFields {
 
 	public String getMessagePayloadEncodeField() {
 		return FIELD_PAYLOAD_ENCODE.getReqString(transformConfigMap);
+	}
+
+	public String getMessageKeyEncodeField() {
+		return FIELD_KEY_ENCODE.getReqString(transformConfigMap);
 	}
 
 	public String getMessageTopicField() {
