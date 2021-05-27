@@ -79,6 +79,7 @@ Descrição de todos os parâmetros:
 | table.column.payload        | sim           | Nome da coluna que tem os dados da mensagem |
 | table.column.payload.encode | não           | Como o payload está encodado na tabela, opções possíveis são base64 (valor default) e byte_array) |
 | table.column.key            | sim           | Nome da coluna que tem a chave da mensagem. Não é a PK da tabela, é a chave que será usada como partition key no envio da mensagem |
+| table.column.key.encode     | não           | Se a key estiver encodada na tabela, opções possíveis são string (valor default), base64 e byte_array) |
 | table.column.topic          | não           | Nome da coluna que tem o nome do tópico que deve ser enviado a mensagem. Apesar de opcional, se não for informado, deve ser informado o parâmetro routing.topic |
 | routing.topic               | não           | Nome do tópico que deve ser encaminhado a mensagem, sobrescreve table.column.topic. Use se você tem várias tabelas de outbox ou vai filtrar os eventos de cada tópico via query |
 | table.column.headers        | não           | Nome das colunas, separadas por vírgula, para serem adicionadas ao header da mensagem  |
@@ -117,3 +118,21 @@ tópico do kafka. Exemplo
 
 A coluna do banco de dados deve ser do tipo numérica e convertida para um Integer (Int32).
 Quando o parâmetro não é informado, nenhum número de partição é informado para o kafka.
+
+### table.column.key.encode
+
+Quando a key está codificada (encodada) no banco de dados, é possível decodificada usando decodificação para base64, 
+byte_array ou o valor default que é string.
+
+```json
+{
+  "transforms": "outbox",
+  "transforms.outbox.table.column.key.encode": "base64"  
+}
+```
+
+Quando o parâmetro não é informado, assume-se o valor string, presumindo que o valor para a chave está codificada em 
+string.
+
+> **Importante** Se o valor no banco de dados é NULL, informamos uma key randômica (`UUID.randomUUID()`) para evitar 
+> qualquer problema com NPE no connector.
