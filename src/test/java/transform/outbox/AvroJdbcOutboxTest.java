@@ -66,9 +66,9 @@ class AvroJdbcOutboxTest {
 		final String keyfieldExpected = "keyfield";
 
 		final IllegalStateException ex = assertThrows(IllegalStateException.class,
-			() -> {
-				AvroJdbcOutbox.validateEncodeSelectedFor(encodeSelected, keyfieldExpected, AvroJdbcOutbox.KEY_VALID_ENCODING);
-			}, ""
+			() -> AvroJdbcOutbox.validateEncodeSelectedFor(encodeSelected, keyfieldExpected,
+				AvroJdbcOutbox.KEY_VALID_ENCODING
+			)
 		);
 
 		assertEquals("invalid value to " + keyfieldExpected, ex.getMessage());
@@ -80,9 +80,9 @@ class AvroJdbcOutboxTest {
 		final String keyfieldExpected = "keyfield";
 
 		final IllegalStateException ex = assertThrows(IllegalStateException.class,
-			() -> {
-				AvroJdbcOutbox.validateEncodeSelectedFor(encodeSelected, keyfieldExpected, AvroJdbcOutbox.KEY_VALID_ENCODING);
-			}, ""
+			() -> AvroJdbcOutbox.validateEncodeSelectedFor(encodeSelected, keyfieldExpected,
+				AvroJdbcOutbox.KEY_VALID_ENCODING
+			)
 		);
 
 		assertEquals("invalid value to " + keyfieldExpected, ex.getMessage());
@@ -112,7 +112,8 @@ class AvroJdbcOutboxTest {
 	void decodeKeyInBase64() {
 		final String expectedKey = UUID.randomUUID()
 			.toString();
-		final String expectedKeyEncoded = Base64.getEncoder().encodeToString(expectedKey.getBytes());
+		final String expectedKeyEncoded = Base64.getEncoder()
+			.encodeToString(expectedKey.getBytes());
 		final String keyColumnFieldName = "keyColumn";
 
 		SchemaBuilder builder = SchemaBuilder.struct();
@@ -150,8 +151,9 @@ class AvroJdbcOutboxTest {
 		assertEquals(expectedKey, actualKey);
 	}
 
-	@Test
-	void generateRandomKeyWhenValueIsNull() {
+	@ParameterizedTest
+	@ValueSource(strings = {"string", "byte_array", "base64"})
+	void generateRandomKeyWhenKeyIsNullAndEncodingIs(final String encodeSelected) {
 		final byte[] expectedKeyEncoded = null;
 		final String keyColumnFieldName = "keyColumn";
 
@@ -163,7 +165,7 @@ class AvroJdbcOutboxTest {
 		recordValue.put(keyColumnFieldName, expectedKeyEncoded);
 
 		// when
-		final String actualKey = AvroJdbcOutbox.getMessageKey(recordValue, "byte_array", keyColumnFieldName);
+		final String actualKey = AvroJdbcOutbox.getMessageKey(recordValue, encodeSelected, keyColumnFieldName);
 
 		// then
 		assertNotNull(actualKey);
