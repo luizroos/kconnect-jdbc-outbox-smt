@@ -242,19 +242,17 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 		final String keyFieldName) {
 		Object keyEncoded = eventStruct.get(keyFieldName);
 
-		// Só precisa decodifica se a key não é string (default).
-		if (!keyEncodingSelected.equals("string")) {
-			final byte[] keyInBytes = getBytesDecoded(keyEncoded, keyEncodingSelected);
-			if (keyEncoded != null) {
-				keyEncoded = new String(keyInBytes);
-			}
-		}
-
 		// Quando a key é nula, temos problemas no kafka connector,
 		// então, melhor aplicarmos um valor qualquer randômico.
 		if (keyEncoded == null) {
 			keyEncoded = UUID.randomUUID()
 				.toString();
+		} else {
+			// Só precisa decodifica se a key não é string (default).
+			if (!keyEncodingSelected.equals("string")) {
+				final byte[] keyInBytes = getBytesDecoded(keyEncoded, keyEncodingSelected);
+				keyEncoded = new String(keyInBytes);
+			}
 		}
 
 		return keyEncoded.toString();
