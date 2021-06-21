@@ -259,13 +259,16 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 	}
 
 	private Integer getPartitionNumber(final Struct eventStruct) {
-		final Object partitionValue = eventStruct.get(this.partitionField);
+		if (this.partitionField != null) {
+			final Object partitionValue = eventStruct.get(this.partitionField);
 
-		if (partitionValue == null) {
-			return null;
+			if (partitionValue == null) {
+				return null;
+			}
+
+			return ((BigDecimal) partitionValue).intValue();
 		}
-
-		return ((BigDecimal) partitionValue).intValue();
+		return null;
 	}
 
 	private void applyHeaders(final R newRecord, final Struct eventStruct) {
