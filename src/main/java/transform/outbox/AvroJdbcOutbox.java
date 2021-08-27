@@ -218,7 +218,8 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 			schemaAndValue.schema(), //
 			schemaAndValue.value(), //
 			LocalDateTime.now()
-				.toEpochSecond(ZoneOffset.of("Z")), //
+				.toInstant(ZoneOffset.of("Z"))
+					.toEpochMilli(), //
 			null
 		);
 
