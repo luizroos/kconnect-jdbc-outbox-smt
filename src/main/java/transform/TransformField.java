@@ -55,7 +55,7 @@ public class TransformField {
 	}
 
 	public int getReqInteger(Map<String, ?> transformConfigMap) {
-		return Integer.valueOf(getReqString(transformConfigMap));
+		return Integer.parseInt(getReqString(transformConfigMap));
 	}
 
 	public String getReqString(Map<String, ?> transformConfigMap) {

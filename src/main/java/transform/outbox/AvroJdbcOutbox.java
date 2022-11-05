@@ -16,6 +16,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import io.confluent.kafka.schemaregistry.ParsedSchema;
+import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import org.apache.avro.generic.GenericContainer;
 import org.apache.avro.specific.SpecificData;
 import org.apache.kafka.common.config.ConfigDef;
@@ -67,7 +69,7 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 
 	private SchemaRegistryClient schemaRegistryClient;
 
-	private Map<String, AvroSchemaCached> avroSchemasCache = new HashMap<>();
+	private final Map<String, AvroSchemaCached> avroSchemasCache = new HashMap<>();
 
 	private AvroData avroData;
 
@@ -147,7 +149,7 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 		}
 	}
 
-	private final org.apache.avro.Schema getTopicAvroSchema(String topic) {
+	private org.apache.avro.Schema getTopicAvroSchema(String topic) {
 		return Optional.ofNullable(avroSchemasCache.get(topic)) //
 			.filter(schema -> schema.getCachedTime()
 				.isAfter(LocalDateTime.now()
@@ -159,8 +161,16 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 					try {
 						final SchemaMetadata latestSchemaMetadata = schemaRegistryClient.getLatestSchemaMetadata(
 							String.format("%s%s", topic, SCHEMA_REGISTRY_TOPIC_SUFFIX));
-						final org.apache.avro.Schema schema = schemaRegistryClient.getById(
-							latestSchemaMetadata.getId());
+
+						ParsedSchema schemaById = schemaRegistryClient.getSchemaById(latestSchemaMetadata.getId());
+						org.apache.avro.Schema schema = schemaById instanceof AvroSchema ? ((AvroSchema) schemaById).rawSchema() : null;
+
+						if (schema == null) try {
+							throw new Exception("Schema avro is null");
+						} catch (Exception e) {
+							throw new RuntimeException(e);
+						}
+
 						avroSchemasCache.put(topic, new AvroSchemaCached(schema));
 						return schema;
 					} catch (IOException | RestClientException e) {

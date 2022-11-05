@@ -2,6 +2,8 @@ package transform.outbox;
 
 import io.confluent.connect.avro.AvroData;
 import io.confluent.connect.avro.AvroDataConfig;
+import io.confluent.kafka.schemaregistry.ParsedSchema;
+import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaMetadata;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
@@ -28,7 +30,10 @@ class LocalSampleRunTest {
         GenericContainerWithVersion aa = deserializer.deserialize("user.changed", false, b);
         System.out.println(aa.container());
         SchemaMetadata latestSchemaMetadata = schemaRegistryClient.getLatestSchemaMetadata("user.changed-value");
-        org.apache.avro.Schema schema = schemaRegistryClient.getById(latestSchemaMetadata.getId());
+
+        ParsedSchema schemaById = schemaRegistryClient.getSchemaById(latestSchemaMetadata.getId());
+        org.apache.avro.Schema schema = schemaById instanceof AvroSchema ? ((AvroSchema) schemaById).rawSchema() : null;
+
         GenericContainer rec = SpecificData.get().deepCopy(schema, aa.container());
 
         AvroDataConfig avroDataConfig = new AvroDataConfig.Builder().with("schemas.cache.config", 10).build();
