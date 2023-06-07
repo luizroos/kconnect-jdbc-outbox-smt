@@ -261,13 +261,13 @@ public class AvroJdbcOutbox<R extends ConnectRecord<R>> implements Transformatio
 
 	private Integer getPartitionNumber(final Struct eventStruct) {
 		if (this.partitionField != null) {
-			final Object partitionValue = eventStruct.get(this.partitionField);
+			final String partitionValue = (String) eventStruct.get(this.partitionField);
 
 			if (partitionValue == null) {
 				return null;
 			}
 
-			return ((BigDecimal) partitionValue).intValue();
+			return Integer.parseInt(partitionValue);
 		}
 		return null;
 	}
